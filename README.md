@@ -6,3 +6,8 @@ Requirements
 
 * iOS 10.0+
 * Xcode 11+
+
+
+```
+pod 'ICSLocationManager'
+```
