@@ -16,7 +16,7 @@ Pod::Spec.new do |spec|
   #
 
   spec.name         = "ICSLocationManager"
-  spec.version      = "0.0.6"
+  spec.version      = "0.0.7"
   spec.summary      = "A CocoaPods library written in Swift. For background location"
 
   # This description is used to generate tags and improve search results.
