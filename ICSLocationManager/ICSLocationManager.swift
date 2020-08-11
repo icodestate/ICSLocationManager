@@ -22,7 +22,7 @@ private struct ICSDateStruct {
     var hour: Int
 }
 
-public class ICSLocationManager: NSObject, CLLocationManagerDelegate {
+public class ICSLocationManager: NSObject {
     
     private let maxBGTime: TimeInterval = 170
     private let minBGTime: TimeInterval = 2
@@ -79,10 +79,10 @@ public class ICSLocationManager: NSObject, CLLocationManagerDelegate {
             stopUpdatingLocation()
         }
         
-        checkLocationInterval = interval > MaxBGTime ? MaxBGTime : interval
-        checkLocationInterval = interval < MinBGTime ? MinBGTime : interval
+        checkLocationInterval = interval > maxBGTime ? maxBGTime : interval
+        checkLocationInterval = interval < minBGTime ? minBGTime : interval
         
-        self.acceptableLocationAccuracy = acceptableLocationAccuracy < MinAcceptableLocationAccuracy ? MinAcceptableLocationAccuracy : acceptableLocationAccuracy
+        self.acceptableLocationAccuracy = acceptableLocationAccuracy < minAcceptableLocationAccuracy ? minAcceptableLocationAccuracy : acceptableLocationAccuracy
         
         isRunning = true
         
@@ -172,7 +172,7 @@ public class ICSLocationManager: NSObject, CLLocationManagerDelegate {
     private func startWaitTimer() {
         stopWaitTimer()
         
-        waitTimer = Timer.scheduledTimer(timeInterval: intervalLocation, target: self, selector: #selector(waitTimerEvent), userInfo: nil, repeats: false)
+        waitTimer = Timer.scheduledTimer(timeInterval: TimeInterval(intervalLocation), target: self, selector: #selector(waitTimerEvent), userInfo: nil, repeats: false)
     }
     
     private func stopWaitTimer() {
@@ -211,7 +211,7 @@ public class ICSLocationManager: NSObject, CLLocationManagerDelegate {
         return location.horizontalAccuracy <= acceptableLocationAccuracy ? true : false
     }
     
-    func stopAndResetBgTaskIfNeeded()  {
+    @objc func stopAndResetBgTaskIfNeeded()  {
         
         if isManagerRunning {
             stopBackgroundTask()

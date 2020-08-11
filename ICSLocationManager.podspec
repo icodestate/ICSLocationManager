@@ -130,4 +130,6 @@ This CocoaPods library helps you perform background location.
   # spec.xcconfig = { "HEADER_SEARCH_PATHS" => "$(SDKROOT)/usr/include/libxml2" }
   # spec.dependency "JSONKit", "~> 1.4"
 
+  spec.swift_version = "4.2"
+
 end
