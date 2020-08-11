@@ -11,7 +11,7 @@ import UIKit
 import CoreLocation
 import BackgroundTasks
 
- public protocol ICSLocationManagerDelegate {
+public protocol ICSLocationManagerDelegate {
     func scheduledLocationManager(_ manager: ICSLocationManager, didFailWithError error: Error)
     func scheduledLocationManager(_ manager: ICSLocationManager, didUpdateLocations locations: [CLLocation])
     func scheduledLocationManager(_ manager: ICSLocationManager, didChangeAuthorization status: CLAuthorizationStatus)
@@ -22,8 +22,7 @@ private struct ICSDateStruct {
     var hour: Int
 }
 
-class ICSLocationManager: NSObject {
-    
+public class ICSLocationManager: NSObject, CLLocationManagerDelegate {
     
     private let maxBGTime: TimeInterval = 170
     private let minBGTime: TimeInterval = 2
@@ -36,7 +35,7 @@ class ICSLocationManager: NSObject {
     private var isManagerRunning = false
     private var checkLocationTimer: Timer?
     private var waitTimer: Timer?
-    private var bgTask = UIBackgroundTaskIdentifier.invalid
+    private var bgTask: UIBackgroundTaskIdentifier = UIBackgroundTaskIdentifier.invalid
     private var lastLocations = [CLLocation]()
     
     public private(set) var acceptableLocationAccuracy: CLLocationAccuracy = 100
@@ -67,23 +66,23 @@ class ICSLocationManager: NSObject {
         manager.delegate = self
     }
     
-    private func requestAlwaysAuthorization() {
+    public func requestAlwaysAuthorization() {
         
         manager.requestAlwaysAuthorization()
     }
     
     
-    private func startUpdatingLocation(interval: TimeInterval, acceptableLocationAccuracy: CLLocationAccuracy = 100) {
+    public func startUpdatingLocation(interval: TimeInterval, acceptableLocationAccuracy: CLLocationAccuracy = 100) {
         
         if isRunning {
             
             stopUpdatingLocation()
         }
         
-        checkLocationInterval = interval > maxBGTime ? maxBGTime : interval
-        checkLocationInterval = interval < minBGTime ? minBGTime : interval
+        checkLocationInterval = interval > MaxBGTime ? MaxBGTime : interval
+        checkLocationInterval = interval < MinBGTime ? MinBGTime : interval
         
-        self.acceptableLocationAccuracy = acceptableLocationAccuracy < minAcceptableLocationAccuracy ? minAcceptableLocationAccuracy : acceptableLocationAccuracy
+        self.acceptableLocationAccuracy = acceptableLocationAccuracy < MinAcceptableLocationAccuracy ? MinAcceptableLocationAccuracy : acceptableLocationAccuracy
         
         isRunning = true
         
@@ -91,7 +90,7 @@ class ICSLocationManager: NSObject {
         startLocationManager()
     }
     
-    private func stopUpdatingLocation() {
+    public func stopUpdatingLocation() {
         
         isRunning = false
         
@@ -106,21 +105,12 @@ class ICSLocationManager: NSObject {
         
         removeNotifications()
         
-        if #available(iOS 13, *) {
-            NotificationCenter.default.addObserver(self, selector:  #selector(applicationDidEnterBackground),
-                                                   name: NSNotification.Name.NSExtensionHostDidEnterBackground,
-                                                   object: nil)
-            NotificationCenter.default.addObserver(self, selector:  #selector(applicationDidBecomeActive),
-                                                   name: NSNotification.Name.NSExtensionHostDidBecomeActive,
-                                                   object: nil)
-        } else {
-            NotificationCenter.default.addObserver(self, selector:  #selector(applicationDidEnterBackground),
-                                                   name: UIApplication.didEnterBackgroundNotification,
-                                                   object: nil)
-            NotificationCenter.default.addObserver(self, selector:  #selector(applicationDidBecomeActive),
-                                                   name: UIApplication.didBecomeActiveNotification,
-                                                   object: nil)
-        }
+        NotificationCenter.default.addObserver(self, selector:  #selector(applicationDidEnterBackground),
+                                               name: UIScene.didEnterBackgroundNotification,
+                                               object: nil)
+        NotificationCenter.default.addObserver(self, selector:  #selector(applicationDidBecomeActive),
+                                               name: UIScene.didActivateNotification,
+                                               object: nil)
     }
     
     private func removeNotifications() {
@@ -169,7 +159,7 @@ class ICSLocationManager: NSObject {
         }
     }
     
-    @objc private func checkLocationTimerEvent() {
+    @objc func checkLocationTimerEvent() {
         
         stopCheckLocationTimer()
         
@@ -182,7 +172,7 @@ class ICSLocationManager: NSObject {
     private func startWaitTimer() {
         stopWaitTimer()
         
-        waitTimer = Timer.scheduledTimer(timeInterval: waitForLocationsTime, target: self, selector: #selector(waitTimerEvent), userInfo: nil, repeats: false)
+        waitTimer = Timer.scheduledTimer(timeInterval: intervalLocation, target: self, selector: #selector(waitTimerEvent), userInfo: nil, repeats: false)
     }
     
     private func stopWaitTimer() {
@@ -194,7 +184,7 @@ class ICSLocationManager: NSObject {
         }
     }
     
-    @objc private func waitTimerEvent() {
+    @objc func waitTimerEvent() {
         
         stopWaitTimer()
         
@@ -221,7 +211,7 @@ class ICSLocationManager: NSObject {
         return location.horizontalAccuracy <= acceptableLocationAccuracy ? true : false
     }
     
-    @objc private func stopAndResetBgTaskIfNeeded()  {
+    func stopAndResetBgTaskIfNeeded()  {
         
         if isManagerRunning {
             stopBackgroundTask()
@@ -252,17 +242,17 @@ class ICSLocationManager: NSObject {
 }
 
 extension ICSLocationManager: CLLocationManagerDelegate {
-    internal func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+    public func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         
         delegate.scheduledLocationManager(self, didChangeAuthorization: status)
     }
     
-    internal func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         
         delegate.scheduledLocationManager(self, didFailWithError: error)
     }
     
-    internal func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         
         guard isManagerRunning else { return }
         guard locations.count>0 else { return }
